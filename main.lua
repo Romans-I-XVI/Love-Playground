@@ -6,6 +6,7 @@ require "source.engine.CollisionFunctions"
 require "source.engine.Timer"
 require "source.control_gameplay"
 require "source.playground_button"
+require "source.control_end_game"
 
 function love.load(arg)
 	math.randomseed(os.clock())

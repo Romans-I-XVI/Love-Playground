@@ -5,26 +5,39 @@ Game:defineObject("control_gameplay",
 			self.gamestart_timer = Timer.new()
 			self.game_active = false
 			self.countdown = 10
-			self.buttons = {}
 			self.colors = { 0xff0000, 0x00ff00, 0x0000ff, 0xffff00}
-			self.scores = {}
-			for i=1,#self.colors do
-				self.scores[self.colors[i]] = 0
-			end
 		end
 
 		function object:onDrawBegin()
 			local center_x = love.graphics.getWidth()/2
 			local center_y = love.graphics.getHeight()/2
 			if not self.game_active then
+				love.graphics.setColor(255, 255, 255, 255)
 				love.graphics.print("Game Starts In", center_x, center_y - 20)
 				love.graphics.print(tostring(self.countdown-math.floor(self.gamestart_timer:getTotalSeconds())), center_x, center_y)
 			end
 
 			-- This is temporary and will be deleted --
-			if #self.buttons > 0 then
+			if self.game_active then
+				if #self.buttons > 0 then
+					for i=1,4 do
+						local color = self.buttons[i].color
+						if color == 0xff0000 then
+							love.graphics.setColor(255, 0, 0, 255)
+						elseif color == 0x00ff00 then
+							love.graphics.setColor(0, 255, 0, 255)
+						elseif color == 0x0000ff then
+							love.graphics.setColor(0, 0, 255, 255)
+						elseif color == 0xffff00 then
+							love.graphics.setColor(255, 255, 0, 255)
+						end
+						love.graphics.circle("fill", 50+100*i, 100, 20, 20)
+					end
+				end
+
 				for i=1,4 do
-					local color = self.buttons[i].color
+					color = self.colors[i]
+					score = self.scores[color]
 					if color == 0xff0000 then
 						love.graphics.setColor(255, 0, 0, 255)
 					elseif color == 0x00ff00 then
@@ -34,32 +47,15 @@ Game:defineObject("control_gameplay",
 					elseif color == 0xffff00 then
 						love.graphics.setColor(255, 255, 0, 255)
 					end
-					love.graphics.circle("fill", 50+100*i, 100, 20, 20)
+					love.graphics.print(score, 50+100*i, 400)
 				end
-			end
-
-			for i=1,4 do
-				color = self.colors[i]
-				score = self.scores[color]
-				if color == 0xff0000 then
-					love.graphics.setColor(255, 0, 0, 255)
-				elseif color == 0x00ff00 then
-					love.graphics.setColor(0, 255, 0, 255)
-				elseif color == 0x0000ff then
-					love.graphics.setColor(0, 0, 255, 255)
-				elseif color == 0xffff00 then
-					love.graphics.setColor(255, 255, 0, 255)
-				end
-				love.graphics.print(score, 50+100*i, 400)
 			end
 			-- This is temporary and will be deleted --
 		end
 
 		function object:onUpdate(dt)
 			if not self.game_active and self.countdown-self.gamestart_timer:getTotalSeconds() <= 0 then
-				self.game_active = true
-				self:CreateButtons()
-				self:ChangeButtonColors()
+				self:ResetGame()
 			end
 		end
 
@@ -70,6 +66,18 @@ Game:defineObject("control_gameplay",
 				print(button)
 				table.insert(self.buttons, button)
 			end
+		end
+
+		function object:ResetGame()
+			Game:destroyAllInstances("control_end_game")
+			self.game_active = true
+			self.buttons = {}
+			self.scores = {}
+			for i=1,#self.colors do
+				self.scores[self.colors[i]] = 0
+			end
+			self:CreateButtons()
+			self:ChangeButtonColors()
 		end
 
 		function object:ChangeButtonColors()
@@ -98,6 +106,12 @@ Game:defineObject("control_gameplay",
 
 		function object:IncrementScore(color)
 			self.scores[color] = self.scores[color] + 1
+			if self.scores[color] == 10 then
+				Game:destroyAllInstances("playground_button")
+				Game:createInstance("control_end_game", {color = color})
+				self.game_active = false
+				self.gamestart_timer:mark()
+			end
 		end
 
 	end
